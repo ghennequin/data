@@ -24,7 +24,7 @@ end) : T = struct
   let with_handle do_this =
     let h = H5.open_rdwr filename in
     let result = do_this h in
-    H5.close h ; result
+    H5.flush h ; H5.close h ; result
 
   let get_object h name =
     let path = String.split_on_char '/' name |> List.filter (( <> ) "") in
