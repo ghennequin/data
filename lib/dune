@@ -1,3 +1,3 @@
 (library
  (public_name data)
- (libraries unix hdf5_caml owl))
+ (libraries unix hdf5_caml cmdargs owl))

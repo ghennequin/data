@@ -1,6 +1,4 @@
 module type T = sig
-  val close : unit -> unit
-
   module Mat : sig
     val load : string -> Owl.Mat.mat
     val save : string -> Owl.Mat.mat -> unit
@@ -12,6 +10,8 @@ module type T = sig
   end
 end
 
+val in_dir: string -> string
+
 module Make (F : sig
-  val file : [`replace of string | `reuse of string ]
+  val file : [ `replace of string | `reuse of string]
 end) : T

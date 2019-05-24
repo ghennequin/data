@@ -1,21 +1,6 @@
 open Hdf5_caml
 
-let parse_group h name =
-  let path = String.split_on_char '/' name |> List.filter (( <> ) "") in
-  let rec traverse cur_h accu =
-    match accu with
-    | [] ->
-        assert false
-    | [hd] ->
-        (cur_h, hd)
-    | g :: rest ->
-        traverse H5.(open_group cur_h g) rest
-  in
-  traverse h path
-
 module type T = sig
-  val close : unit -> unit
-
   module Mat : sig
     val load : string -> Owl.Mat.mat
     val save : string -> Owl.Mat.mat -> unit
@@ -27,22 +12,41 @@ module type T = sig
   end
 end
 
+let dir = Cmdargs.(get_string "-d" |> force ~usage:"-d [directory]")
+let in_dir = Printf.sprintf "%s/%s" dir
+
 module Make (F : sig
   val file : [`replace of string | `reuse of string]
 end) : T = struct
-  let h =
-    match F.file with `replace f -> Sys.remove f ; H5.open_rdwr f | `reuse f -> H5.open_rdwr f
+  let _ = match F.file with `replace f -> if Sys.file_exists f then Sys.remove f | _ -> ()
+  let filename = match F.file with `replace f -> f | `reuse f -> f
 
-  let close () = H5.flush h ; H5.close h
-  let _ = at_exit (fun () -> try H5.close h ; Printf.printf "closed\n%!" with _ -> ())
+  let with_handle do_this =
+    let h = H5.open_rdwr filename in
+    let result = do_this h in
+    H5.close h ; result
+
+  let get_object h name =
+    let path = String.split_on_char '/' name |> List.filter (( <> ) "") in
+    let rec traverse cur_h accu =
+      match accu with
+      | [] ->
+          assert false
+      | [hd] ->
+          (cur_h, hd)
+      | g :: rest ->
+          traverse H5.(open_group cur_h g) rest
+    in
+    traverse h path
 
   module Mat = struct
-    let load name = H5.Float64.read_float_genarray h name Bigarray.c_layout
+    let load name = with_handle (fun h -> H5.Float64.read_float_genarray h name Bigarray.c_layout)
 
     let save name x =
-      let h, name = parse_group h name in
-      if H5.exists h name then H5.delete h name ;
-      H5.Float64.write_float_genarray h name x
+      with_handle (fun h ->
+          let h, name = get_object h name in
+          if H5.exists h name then H5.delete h name ;
+          H5.Float64.write_float_genarray h name x )
   end
 
   module Arr = Mat
