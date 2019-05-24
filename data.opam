@@ -1,0 +1,19 @@
+opam-version: "2.0"
+maintainer: "Guillaume Hennequin"
+authors: [ "Guillaume Hennequin" ]
+license: "MIT"
+homepage: "https://github.com/ghennequin/data"
+dev-repo: "git+https://github.com/ghennequin/data.git"
+bug-reports: "https://github.com/ghennequin/data/issues"
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
+]
+depends: [
+  "ocaml" {>= "4.06.0"}
+  "dune" {build & >= "1.1.0"}
+  "hdf5"
+  "base-unix"
+  "owl" {>= "0.4.0"}
+]
+synopsis: "Data management for scientific computing"
