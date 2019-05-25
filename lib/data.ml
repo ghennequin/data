@@ -40,7 +40,10 @@ end) : T = struct
     traverse h path
 
   module Mat = struct
-    let load name = with_handle (fun h -> H5.Float64.read_float_genarray h name Bigarray.c_layout)
+    let load name =
+      with_handle (fun h ->
+          let h, name = get_object h name in
+          H5.Float64.read_float_genarray h name Bigarray.c_layout )
 
     let save name x =
       with_handle (fun h ->
