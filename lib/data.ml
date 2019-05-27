@@ -1,6 +1,8 @@
 open Hdf5_caml
 
 module type T = sig
+  type t_prms
+
   module Mat : sig
     val load : string -> Owl.Mat.mat
     val save : string -> Owl.Mat.mat -> unit
@@ -12,6 +14,8 @@ module type T = sig
   end
 
   module Prms : sig
+    val t : string -> t_prms -> t_prms
+    val load : string -> t_prms
     val int : string -> int -> int
     val float : string -> float -> float
     val string : string -> string -> string
@@ -22,8 +26,15 @@ let dir = Cmdargs.(get_string "-d" |> force ~usage:"-d [directory]")
 let in_dir = Printf.sprintf "%s/%s" dir
 
 module Make (F : sig
+  type t_prms
+
+  val sexp_of_t_prms : t_prms -> Sexplib0.Sexp.t
+  val t_prms_of_sexp : Sexplib0.Sexp.t -> t_prms
   val file : [ `replace of string | `reuse of string ]
-end) : T = struct
+end) =
+struct
+  include F
+
   let _ =
     match F.file with
     | `replace f -> if Sys.file_exists f then Sys.remove f
@@ -85,6 +96,14 @@ end) : T = struct
           H5a.close attr;
           H5g.close p_)
 
+
+    let t label value =
+      let s = Sexplib0.Sexp.to_string (F.sexp_of_t_prms value) in
+      generic label s;
+      value
+
+
+    let load _ = F.t_prms_of_sexp Sexplib0.Sexp.(List [])
 
     let int label value =
       let s = string_of_int value in

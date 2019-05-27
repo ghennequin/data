@@ -1,3 +1,4 @@
 (executables
  (names test)
- (libraries data))
+ (libraries data)
+ (preprocess (pps ppx_sexp_conv)))

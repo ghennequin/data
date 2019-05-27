@@ -1,4 +1,4 @@
 (library
  (name data)
  (public_name data)
- (libraries unix hdf5-caml cmdargs owl))
+ (libraries unix hdf5-caml cmdargs owl sexplib))
