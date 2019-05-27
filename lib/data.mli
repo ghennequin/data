@@ -1,3 +1,10 @@
+module type Prm_type = sig
+  type t
+
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+  val t_of_sexp : Sexplib0.Sexp.t -> t
+end
+ 
 module type T = sig
 
   type t_prms
@@ -23,12 +30,9 @@ end
 
 val in_dir : string -> string
 
-module Make
+module Make (P: Prm_type)
 (F : sig
-  type t_prms
-  val sexp_of_t_prms: t_prms -> Sexplib0.Sexp.t
-  val t_prms_of_sexp: Sexplib0.Sexp.t -> t_prms
   val file : [ `replace of string | `reuse of string ]
-end) : T with type t_prms = F.t_prms 
+end) : T with type t_prms = P.t
 
 

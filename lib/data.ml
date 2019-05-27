@@ -1,5 +1,12 @@
 open Hdf5_caml
 
+module type Prm_type = sig
+  type t
+
+  val sexp_of_t : t -> Sexplib0.Sexp.t
+  val t_of_sexp : Sexplib0.Sexp.t -> t
+end
+
 module type T = sig
   type t_prms
 
@@ -25,15 +32,12 @@ end
 let dir = Cmdargs.(get_string "-d" |> force ~usage:"-d [directory]")
 let in_dir = Printf.sprintf "%s/%s" dir
 
-module Make (F : sig
-  type t_prms
-
-  val sexp_of_t_prms : t_prms -> Sexplib0.Sexp.t
-  val t_prms_of_sexp : Sexplib0.Sexp.t -> t_prms
-  val file : [ `replace of string | `reuse of string ]
-end) =
+module Make
+    (P : Prm_type) (F : sig
+        val file : [ `replace of string | `reuse of string ]
+    end) =
 struct
-  include F
+  type t_prms = P.t
 
   let _ =
     match F.file with
@@ -98,12 +102,12 @@ struct
 
 
     let t label value =
-      let s = Sexplib0.Sexp.to_string (F.sexp_of_t_prms value) in
+      let s = Sexplib0.Sexp.to_string (P.sexp_of_t value) in
       generic label s;
       value
 
 
-    let load _ = F.t_prms_of_sexp Sexplib0.Sexp.(List [])
+    let load _ = P.t_of_sexp Sexplib0.Sexp.(List [])
 
     let int label value =
       let s = string_of_int value in
