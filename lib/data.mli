@@ -27,10 +27,10 @@ module type Param_type = sig
   val t_of_sexp : Sexplib0.Sexp.t -> t
   val sexp_of_t : t -> Sexplib0.Sexp.t
 end
- 
+
 (** Handle basic simulation parameter types *)
 module Param : sig
-  val t: data:data -> (module Param_type with type t = 'a) -> string -> 'a -> 'a
+  val t : data:data -> (module Param_type with type t = 'a) -> string -> 'a -> 'a
   val int : data:data -> string -> int -> int
   val float : data:data -> string -> float -> float
   val string : data:data -> string -> string -> string

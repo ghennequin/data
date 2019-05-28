@@ -72,9 +72,11 @@ module Param = struct
         H5g.close p_);
     value
 
-  let t (type _t) ~data (module P: Param_type with type t = _t) label =
+
+  let t (type _t) ~data (module P : Param_type with type t = _t) label =
     let conv value = value |> P.sexp_of_t |> Sexplib0.Sexp.to_string in
     generic ~data label conv
+
 
   let int ~data label = generic ~data label string_of_int
   let float ~data label = generic ~data label string_of_float
