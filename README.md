@@ -1,5 +1,7 @@
 # Data management module
 
+The API documentation is [here](docs/data/Data/index.html).
+
 ```ocaml
 (* create the main data object *)
 let data = Data.file (`replace Data.(in_dir "results.h5"))
