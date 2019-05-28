@@ -1,5 +1,5 @@
 (install
  (section bin)
- (package data)
+ (package hlab-data)
  (files
   (datah5 as datah5)))
