@@ -1,6 +1,6 @@
 # Data management module
 
-The API documentation is [here](docs/data/Data/index.html).
+The API documentation is [here](http://hennequin-lab.github.io/data/docs/data/Data/index.html).
 
 ```ocaml
 (* create the main data object *)
