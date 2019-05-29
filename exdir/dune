@@ -1,0 +1,10 @@
+; (library
+; (name exdir)
+; (libraries yaml yaml.unix ppx_protocol_conv_yaml)
+; (preprocess (pps ppx_protocol_conv_yaml)))
+
+(executable
+  (name exdir)
+  (libraries yaml yaml.unix ppx_protocol_conv_yaml)
+  (preprocess (pps ppx_protocol_conv_yaml)))
+   
