@@ -1,5 +1,5 @@
 (executables
- (names test)
- (libraries data)
+ (names test test_exdir)
+ (libraries data exdir)
  (preprocess
   (pps ppx_sexp_conv)))
