@@ -3,29 +3,28 @@
 The API documentation is [here](http://hennequin-lab.github.io/data/docs/data/Data/index.html).
 
 ```ocaml
-(* create the main data object *)
-let data = Data.file (`replace Data.(in_dir "results.h5"))
-
-(* save a few simulation parameters *)
-let n = 5 |> Data.Param.int ~data "n"
-let dir = "strawberry" |> Data.Param.string ~data "dir"
-let pi = 3.1415 |> Data.Param.float ~data "pi"
+(* create the h5 object *)
+let h5 = Data.(h5 (in_dir "results.h5"))
 
 (* save a matrix *)
 let x = Owl.Mat.gaussian 10 20
-let () = Data.Mat.save ~data "group1/group2/x" x
+let _ = Data.Mat.save ~h5 "group1/group2/x" x
 
-(* a more advanced example based on ppx_deriving of type-to-sexp converters *)
-module P = struct
-  open Sexplib.Std
+(* create the json object for saving parameters *)
+let json = Data.(json (in_dir "results.json"))
 
-  type t =
-    { a : int list
-    ; b : float
-    }
-  [@@deriving sexp]
-end
+(* define some parameters and save them in the json file *)
+let n = 5 |> Data.int ~json "n"
+let dir = "strawberry" |> Data.string ~json "dir"
+let pi = 3.1415 |> Data.float ~json "pi"
 
-(* [x] has type P.t (the struct above), and gets stored as a sexp in the hdf5 file *)
-let x = Data.Param.t ~data (module P) "param_set" P.{ a = [ 0; 1 ]; b = 0.5 }
+(* more advanced example showing the use of an automatic
+   Json converter from a custom record type *)
+type prms =
+  { sim : [ `test | `real ]
+  ; other : bool
+  }
+[@@deriving yojson]
+
+let p = { sim = `test; other = true } |> Data.any ~json "prms" prms_to_yojson
 ```
