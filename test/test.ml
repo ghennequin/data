@@ -1,25 +1,20 @@
-(* create the main data object *)
-let data = Data.file (`replace Data.(in_dir "results.h5"))
-
-(* save a few simulation parameters *)
-let n = 5 |> Data.Param.int ~data "n"
-let dir = "strawberry" |> Data.Param.string ~data "dir"
-let pi = 3.1415 |> Data.Param.float ~data "pi"
+(* create the h5 object *)
+let h5 = Data.(h5 (in_dir "results.h5"))
 
 (* save a matrix *)
 let x = Owl.Mat.gaussian 10 20
-let () = Data.Mat.save ~data "group1/group2/x" x
+let () = Data.Mat.save ~h5 "group1/group2/x" x
 
-(* a more advanced example based on ppx_deriving of type-to-sexp converters *)
-module P = struct
-  open Sexplib.Std
+(* create the json object for saving parameters *)
+let json = Data.(json (in_dir "results.json"))
+let n = 5 |> Data.int ~json "n"
+let dir = "strawberry" |> Data.string ~json "dir"
+let pi = 3.1415 |> Data.float ~json "pi"
 
-  type t =
-    { a : int list
-    ; b : float
-    }
-  [@@deriving sexp]
-end
+type prms =
+  { sim : [ `test | `real ]
+  ; other : bool
+  }
+[@@deriving yojson]
 
-(* [x] has type P.t (the struct above), and gets stored as a sexp in the hdf5 file *)
-let x = Data.Param.t ~data (module P) "param_set" P.{ a = [ 0; 1 ]; b = 0.5 }
+let p = { sim = `test; other = true } |> Data.any ~json "prms" prms_to_yojson

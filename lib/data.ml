@@ -2,20 +2,22 @@ open Hdf5_caml
 
 let in_dir =
   let dir = Cmdargs.(get_string "-d" |> force ~usage:"-d [directory]") in
-  Printf.sprintf "%s/%s" dir
+  let dir = Fpath.(v dir) in
+  fun s -> Fpath.(dir / s) |> Fpath.to_string
 
 
-type data = string
+let ensure_ext ext f = if Fpath.has_ext ext f then f else Fpath.add_ext ext f
 
-let file = function
-  | `reuse f -> f
-  | `replace f ->
-    if Sys.file_exists f then Sys.remove f;
-    f
+type h5 = string
+
+let h5 ?(reuse = false) f =
+  let f = Fpath.(v f) |> ensure_ext "h5" |> Fpath.to_string in
+  if (not reuse) && Sys.file_exists f then Sys.remove f;
+  f
 
 
-let with_handle ~data do_this =
-  let h = H5.open_rdwr data in
+let with_handle h5 do_this =
+  let h = H5.open_rdwr h5 in
   let result = do_this h in
   H5.flush h;
   H5.close h;
@@ -34,14 +36,14 @@ let get_object h name =
 
 
 module Mat = struct
-  let load ~data name =
-    with_handle ~data (fun h ->
+  let load ~h5 name =
+    with_handle h5 (fun h ->
         let h, name = get_object h name in
         H5.Float64.read_float_genarray h name Bigarray.c_layout)
 
 
-  let save ~data name x =
-    with_handle ~data (fun h ->
+  let save ~h5 name x =
+    with_handle h5 (fun h ->
         let h, name = get_object h name in
         if H5.exists h name then H5.delete h name;
         H5.Float64.write_float_genarray h name x)
@@ -49,36 +51,27 @@ end
 
 module Arr = Mat
 
-module type Param_type = sig
-  type t
+type json = string
 
-  val t_of_sexp : Sexplib0.Sexp.t -> t
-  val sexp_of_t : t -> Sexplib0.Sexp.t
-end
-
-module Param = struct
-  let generic ~data label conv value =
-    let s = conv value in
-    with_handle ~data (fun h ->
-        let p_ = H5.open_group h "prms" |> H5.hid in
-        let open Hdf5_raw in
-        let atype = H5t.copy H5t.c_s1 in
-        H5t.set_size atype (String.length s);
-        H5t.set_strpad atype H5t.Str.NULLTERM;
-        let ds = H5s.create_simple [| 1 |] in
-        let attr = H5a.create p_ label atype ds in
-        H5a.write_string attr atype s;
-        H5a.close attr;
-        H5g.close p_);
-    value
+let json ?(reuse = false) f =
+  let f = Fpath.(v f) |> ensure_ext "json" |> Fpath.to_string in
+  if (not reuse) && Sys.file_exists f then Sys.remove f;
+  f
 
 
-  let t (type _t) ~data (module P : Param_type with type t = _t) label =
-    let conv value = value |> P.sexp_of_t |> Sexplib0.Sexp.to_string in
-    generic ~data label conv
+let gen conv ~json label x =
+  let prms_prev =
+    if Sys.file_exists json then Yojson.Safe.from_file json else `Assoc []
+  in
+  let prms = Yojson.Safe.(Util.combine prms_prev (`Assoc [ label, conv x ])) in
+  let f = Stdlib.open_out json in
+  Yojson.Safe.pretty_to_channel f prms;
+  Stdlib.close_out f;
+  x
 
 
-  let int ~data label = generic ~data label string_of_int
-  let float ~data label = generic ~data label string_of_float
-  let string ~data label = generic ~data label (fun value -> value)
-end
+let bool = gen (fun x -> `Bool x)
+let int = gen (fun x -> `Int x)
+let float = gen (fun x -> `Float x)
+let string = gen (fun x -> `String x)
+let any ~json label conv x = gen conv ~json label x

@@ -1,5 +1,6 @@
 (executables
- (names test test_exdir)
- (libraries data exdir)
- (preprocess
-  (pps ppx_sexp_conv)))
+ (names test)
+ (libraries data)
+ (preprocess (pps ppx_deriving_yojson)))
+
+

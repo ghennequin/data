@@ -1,6 +1,4 @@
 (library
  (name data)
  (public_name data)
- (libraries unix hdf5-caml cmdargs owl sexplib)
- (preprocess
-  (pps ppx_sexp_conv)))
+ (libraries unix bigarray hdf5_caml cmdargs owl fpath yojson))

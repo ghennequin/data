@@ -2,36 +2,31 @@
     "result directory" passed as a [-d dir] command line argument. *)
 val in_dir : string -> string
 
-(** Abstract HDF5 data handler *)
-type data
+(** {1 Hdf5 files to store large arrays} *)
 
-(** Create a data handler from the specification of a filename; at this stage, if the
-    file doesn't exist, it is created. *)
-val file : [ `replace of string | `reuse of string ] -> data
+type h5
+
+val h5 : ?reuse:bool -> string -> h5
 
 (** [Mat.mat] operations *)
 module Mat : sig
-  val save : data:data -> string -> Owl.Mat.mat -> unit
-  val load : data:data -> string -> Owl.Mat.mat
+  val save : h5:h5 -> string -> Owl.Mat.mat -> unit
+  val load : h5:h5 -> string -> Owl.Mat.mat
 end
 
 (** [Owl.Arr] operations *)
 module Arr : sig
-  val save : data:data -> string -> Owl.Arr.arr -> unit
-  val load : data:data -> string -> Owl.Arr.arr
+  val save : h5:h5 -> string -> Owl.Arr.arr -> unit
+  val load : h5:h5 -> string -> Owl.Arr.arr
 end
 
-module type Param_type = sig
-  type t
+(** {1 Json files to log simulation parameters} *)
 
-  val t_of_sexp : Sexplib0.Sexp.t -> t
-  val sexp_of_t : t -> Sexplib0.Sexp.t
-end
+type json
 
-(** Handle basic simulation parameter types *)
-module Param : sig
-  val t : data:data -> (module Param_type with type t = 'a) -> string -> 'a -> 'a
-  val int : data:data -> string -> int -> int
-  val float : data:data -> string -> float -> float
-  val string : data:data -> string -> string -> string
-end
+val json : ?reuse:bool -> string -> json
+val bool : json:json -> string -> bool -> bool
+val int : json:json -> string -> int -> int
+val float : json:json -> string -> float -> float
+val string : json:json -> string -> string -> string
+val any : json:json -> string -> ('a -> Yojson.Safe.json) -> 'a -> 'a
