@@ -1,5 +1,5 @@
 (library
  (name exdir)
  (libraries fpath yaml yaml.unix ppx_protocol_conv_yaml)
- (preprocess (pps ppx_protocol_conv_yaml)))
-
+ (preprocess
+  (pps ppx_protocol_conv_yaml)))

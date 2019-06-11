@@ -1,6 +1,5 @@
 (executables
  (names test)
  (libraries data)
- (preprocess (pps ppx_deriving_yojson)))
-
-
+ (preprocess
+  (pps ppx_deriving_yojson)))
