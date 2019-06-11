@@ -35,6 +35,51 @@ let get_object h name =
   traverse h path
 
 
+module H5Attr = struct
+  let exists ~h5 name =
+    with_handle h5 (fun h ->
+        let h, name = get_object h name in
+        H5.attribute_exists h name)
+
+
+  let delete ~h5 name =
+    if exists ~h5 name
+    then
+      with_handle h5 (fun h ->
+          let h, name = get_object h name in
+          if H5.attribute_exists h name then H5.delete_attribute h name)
+
+
+  let get f ~h5 name =
+    with_handle h5 (fun h ->
+        let h, name' = get_object h name in
+        if H5.attribute_exists h name'
+        then f h name
+        else failwith Printf.(sprintf "Attribute %s does not exist" name))
+
+
+  let get_int64 = get H5.read_attribute_int64
+  let get_int ~h5 name = get_int64 ~h5 name |> Int64.to_int
+  let get_float = get H5.read_attribute_float
+  let get_float_array = get H5.read_attribute_float_array
+  let get_string = get H5.read_attribute_string
+  let get_string_array = get H5.read_attribute_string_array
+
+  let write f ~h5 name x =
+    with_handle h5 (fun h ->
+        let h, name = get_object h name in
+        if H5.attribute_exists h name then H5.delete_attribute h name;
+        f h name x)
+
+
+  let write_int64 = write H5.write_attribute_int64
+  let write_int ~h5 name x = write_int64 ~h5 name (Int64.of_int x)
+  let write_float = write H5.write_attribute_float
+  let write_float_array = write H5.write_attribute_float_array
+  let write_string = write H5.write_attribute_string
+  let write_string_array = write H5.write_attribute_string_array
+end
+
 module Mat = struct
   let load ~h5 name =
     with_handle h5 (fun h ->
