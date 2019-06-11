@@ -64,9 +64,9 @@ let gen conv ~json label x =
     if Sys.file_exists json then Yojson.Safe.from_file json else `Assoc []
   in
   let prms = Yojson.Safe.(Util.combine prms_prev (`Assoc [ label, conv x ])) in
-  let f = Stdlib.open_out json in
+  let f = open_out json in
   Yojson.Safe.pretty_to_channel f prms;
-  Stdlib.close_out f;
+  close_out f;
   x
 
 
