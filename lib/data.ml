@@ -52,9 +52,9 @@ module H5Attr = struct
 
   let get f ~h5 name =
     with_handle h5 (fun h ->
-        let h, name' = get_object h name in
-        if H5.attribute_exists h name'
-        then f h name
+        let h, n = get_object h name in
+        if H5.attribute_exists h n
+        then f h n
         else failwith Printf.(sprintf "Attribute %s does not exist" name))
 
 
