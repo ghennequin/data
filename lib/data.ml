@@ -36,6 +36,85 @@ let get_object h name =
   traverse h path
 
 
+module Iter = struct
+  type index_order =
+    | Default
+    | Incr
+    | Decr
+
+  type index_by =
+    | Name
+    | Create_order
+
+  let _iter iterate_by_name ~h5 ?(index_by = Name) ?(index_order = Default) ~stop name =
+    with_handle h5 (fun h ->
+        let h, name = get_object h name in
+        let iter_order =
+          match index_order with
+          | Default -> Hdf5_raw.H5_raw.Iter_order.NATIVE
+          | Incr -> Hdf5_raw.H5_raw.Iter_order.INC
+          | Decr -> Hdf5_raw.H5_raw.Iter_order.DEC
+        in
+        let index_type =
+          match index_by with
+          | Name -> Hdf5_raw.H5_raw.Index.NAME
+          | Create_order -> Hdf5_raw.H5_raw.Index.CRT_ORDER
+        in
+        let stop a b _c _d =
+          if stop (H5.h5t a) b
+          then Hdf5_raw.H5_raw.Iter.STOP
+          else Hdf5_raw.H5_raw.Iter.CONT
+        in
+        iterate_by_name (H5.hid h) name index_type iter_order stop |> ignore)
+
+
+  let iter =
+    let iterate_by_name h name idx_type iter_order stop =
+      H5l.iterate_by_name h name idx_type iter_order stop ()
+    in
+    _iter iterate_by_name
+
+
+  let iter_attr =
+    let iterate_by_name h5 name idx_type iter_order stop () =
+      H5a.iterate_by_name h5 name ~idx_type ~iter_order stop ()
+    in
+    _iter iterate_by_name
+
+
+  let _map
+      (iter :
+        h5:h5
+        -> ?index_by:index_by
+        -> ?index_order:index_order
+        -> stop:(H5.t -> h5 -> bool)
+        -> h5
+        -> unit)
+      ~h5
+      ~index_by
+      ~index_order
+      ~f
+      name
+    =
+    let x = ref [] in
+    let stop h name =
+      x := f h name :: !x;
+      false
+    in
+    iter ~h5 ~index_by ~index_order ~stop name;
+    let x = !x |> List.rev |> Array.of_list in
+    Gc.minor ();
+    x
+
+
+  let map ~h5 ?(index_by = Name) ?(index_order = Default) ~f name =
+    _map iter ~h5 ~index_by ~index_order ~f name
+
+
+  let map_attr ~h5 ?(index_by = Name) ?(index_order = Default) ~f name =
+    _map iter_attr ~h5 ~index_by ~index_order ~f name
+end
+
 module Link = struct
   let exists ~h5 name =
     with_handle h5 (fun h ->
@@ -71,6 +150,13 @@ module Link = struct
 end
 
 module H5Attr = struct
+  type attr =
+    | Int of int
+    | Float of float
+    | String of string
+    | Float_array of float array
+    | String_array of string array
+
   let exists ~h5 name =
     with_handle h5 (fun h ->
         let h, name = get_object h name in
@@ -100,6 +186,33 @@ module H5Attr = struct
   let get_string = get H5.read_attribute_string
   let get_string_array = get H5.read_attribute_string_array
 
+  let get_all =
+    let f h name =
+      let h = H5.hid h in
+      let attr = H5a.open_ h name in
+      let atype = H5a.get_type attr in
+      let aspace = H5a.get_space attr in
+      let c1 = H5t.get_class atype in
+      let c2 = H5s.get_simple_extent_type aspace in
+      H5t.close attr;
+      H5s.close aspace;
+      H5a.close atype;
+      let x =
+        let open H5t.Class in
+        let open H5s.Class in
+        match c1, c2 with
+        | INTEGER, SCALAR -> Int (H5.read_attribute_int64 H5.(h5t h) name |> Int64.to_int)
+        | FLOAT, SCALAR -> Float (H5.read_attribute_float H5.(h5t h) name)
+        | FLOAT, SIMPLE -> Float_array (H5.read_attribute_float_array H5.(h5t h) name)
+        | STRING, SCALAR -> String (H5.read_attribute_string H5.(h5t h) name)
+        | STRING, SIMPLE -> String_array (H5.read_attribute_string_array H5.(h5t h) name)
+        | _ -> failwith "yo"
+      in
+      name, x
+    in
+    fun ~h5 name -> Iter.map_attr ~h5 ~f name
+
+
   let write f ~h5 name x =
     with_handle h5 (fun h ->
         let h, name = get_object h name in
@@ -120,6 +233,13 @@ module Mat = struct
     with_handle h5 (fun h ->
         let h, name = get_object h name in
         H5.Float64.read_float_genarray h name Bigarray.c_layout)
+
+
+  (** [load all ~h5 name ] is an array of matrices within a group or file specified by h5
+      and name *)
+  let load_all =
+    let f h name = H5.Float64.read_float_genarray h name Bigarray.c_layout in
+    fun ~h5 name -> Iter.map ~h5 ~f name
 
 
   let save ~h5 name x =
