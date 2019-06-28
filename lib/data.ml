@@ -1,4 +1,5 @@
 open Hdf5_caml
+open Hdf5_raw
 
 let in_dir =
   let dir = Cmdargs.(get_string "-d" |> force ~usage:"-d [directory]") in
@@ -34,6 +35,40 @@ let get_object h name =
   in
   traverse h path
 
+
+module Link = struct
+  let exists ~h5 name =
+    with_handle h5 (fun h ->
+        let link, link_name = get_object h name in
+        H5l.exists (Hdf5_caml.H5.hid link) link_name)
+
+
+  let delete ~h5 name =
+    with_handle h5 (fun h ->
+        let link, link_name = get_object h name in
+        if H5l.exists (Hdf5_caml.H5.hid link) link_name
+        then H5l.delete (Hdf5_caml.H5.hid link) link_name)
+
+
+  let soft ~h5 ~target name =
+    with_handle h5 (fun h ->
+        let link, link_name = get_object h name in
+        if H5l.exists (Hdf5_caml.H5.hid link) link_name
+        then H5l.delete (Hdf5_caml.H5.hid link) link_name;
+        H5.create_soft_link ~target_path:target ~link ~link_name)
+
+
+  let ext ~h5 ~target_file ~target_path name =
+    with_handle h5 (fun h ->
+        let link, link_name = get_object h name in
+        if H5l.exists (Hdf5_caml.H5.hid link) link_name
+        then H5l.delete (Hdf5_caml.H5.hid link) link_name;
+        H5.create_external_link
+          link
+          ~target_file_name:target_file
+          ~target_obj_name:target_path
+          ~link_name)
+end
 
 module H5Attr = struct
   let exists ~h5 name =

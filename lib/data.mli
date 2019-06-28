@@ -8,6 +8,13 @@ type h5
 
 val h5 : ?reuse:bool -> string -> h5
 
+module Link : sig
+  val exists : h5:h5 -> string -> bool
+  val delete : h5:h5 -> string -> unit
+  val soft : h5:h5 -> target:string -> string -> unit
+  val ext : h5:h5 -> target_file:string -> target_path:string -> string -> unit
+end
+
 module H5Attr : sig
   val exists : h5:h5 -> string -> bool
   val delete : h5:h5 -> string -> unit
