@@ -7,6 +7,8 @@ val in_dir : string -> string
 type h5
 
 val h5 : ?reuse:bool -> string -> h5
+val with_hand : h5 -> (Hdf5_caml.H5.t -> 'a) -> 'a
+val get_object : Hdf5_caml.H5.t -> string -> Hdf5_caml.H5.t * string
 
 module Iter : sig
   type index_order =
