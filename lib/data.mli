@@ -8,6 +8,49 @@ type h5
 
 val h5 : ?reuse:bool -> string -> h5
 
+module Iter : sig
+  type index_order =
+    | Default
+    | Incr
+    | Decr
+
+  type index_by =
+    | Name
+    | Create_order
+
+  val iter
+    :  h5:h5
+    -> ?index_by:index_by
+    -> ?index_order:index_order
+    -> stop:(Hdf5_caml.H5.t -> h5 -> bool)
+    -> h5
+    -> unit
+
+  val iter_attr
+    :  h5:h5
+    -> ?index_by:index_by
+    -> ?index_order:index_order
+    -> stop:(Hdf5_caml.H5.t -> h5 -> bool)
+    -> h5
+    -> unit
+
+  val map
+    :  h5:h5
+    -> ?index_by:index_by
+    -> ?index_order:index_order
+    -> f:(Hdf5_caml.H5.t -> h5 -> 'a)
+    -> h5
+    -> 'a array
+
+  val map_attr
+    :  h5:h5
+    -> ?index_by:index_by
+    -> ?index_order:index_order
+    -> f:(Hdf5_caml.H5.t -> h5 -> 'a)
+    -> h5
+    -> 'a array
+end
+
 module Link : sig
   val exists : h5:h5 -> string -> bool
   val delete : h5:h5 -> string -> unit
@@ -16,6 +59,13 @@ module Link : sig
 end
 
 module H5Attr : sig
+  type attr =
+    | Int of int
+    | Float of float
+    | String of string
+    | Float_array of float array
+    | String_array of string array
+
   val exists : h5:h5 -> string -> bool
   val delete : h5:h5 -> string -> unit
   val get_int64 : h5:h5 -> string -> int64
@@ -24,6 +74,7 @@ module H5Attr : sig
   val get_float_array : h5:h5 -> string -> float array
   val get_string : h5:h5 -> string -> string
   val get_string_array : h5:h5 -> string -> string array
+  val get_all : h5:h5 -> string -> (string * attr) array
   val write_int64 : h5:h5 -> string -> int64 -> unit
   val write_int : h5:h5 -> string -> int -> unit
   val write_float : h5:h5 -> string -> float -> unit
@@ -36,12 +87,14 @@ end
 module Mat : sig
   val save : h5:h5 -> string -> Owl.Mat.mat -> unit
   val load : h5:h5 -> string -> Owl.Mat.mat
+  val load_all : h5:h5 -> string -> Owl.Mat.mat array
 end
 
 (** [Owl.Arr] operations *)
 module Arr : sig
   val save : h5:h5 -> string -> Owl.Arr.arr -> unit
   val load : h5:h5 -> string -> Owl.Arr.arr
+  val load_all : h5:h5 -> string -> Owl.Arr.arr array
 end
 
 (** {1 Json files to log simulation parameters} *)
