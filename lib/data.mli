@@ -7,6 +7,8 @@ val in_dir : string -> string
 type h5
 
 val h5 : ?reuse:bool -> string -> h5
+val with_handle : h5 -> (Hdf5_caml.H5.t -> 'a) -> 'a
+val get_object : Hdf5_caml.H5.t -> string -> Hdf5_caml.H5.t * string
 
 module Iter : sig
   type index_order =
@@ -106,4 +108,4 @@ val bool : json:json -> string -> bool -> bool
 val int : json:json -> string -> int -> int
 val float : json:json -> string -> float -> float
 val string : json:json -> string -> string -> string
-val any : json:json -> string -> ('a -> Yojson.Safe.t) -> 'a -> 'a
+val any : json:json -> string -> ('a -> Yojson.Safe.json) -> 'a -> 'a

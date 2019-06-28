@@ -1,10 +1,13 @@
 open Hdf5_caml
 open Hdf5_raw
 
-let in_dir =
-  let dir = Cmdargs.(get_string "-d" |> force ~usage:"-d [directory]") in
-  let dir = Fpath.(v dir) in
-  fun s -> Fpath.(dir / s) |> Fpath.to_string
+let in_dir s =
+  let dir =
+    lazy
+      (let dir = Cmdargs.(get_string "-d" |> force ~usage:"-d [directory]") in
+       Fpath.(v dir))
+  in
+  Fpath.(Lazy.force dir / s) |> Fpath.to_string
 
 
 let ensure_ext ext f = if Fpath.has_ext ext f then f else Fpath.add_ext ext f
