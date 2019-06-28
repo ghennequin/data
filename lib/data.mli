@@ -46,4 +46,4 @@ val bool : json:json -> string -> bool -> bool
 val int : json:json -> string -> int -> int
 val float : json:json -> string -> float -> float
 val string : json:json -> string -> string -> string
-val any : json:json -> string -> ('a -> Yojson.Safe.json) -> 'a -> 'a
+val any : json:json -> string -> ('a -> Yojson.Safe.t) -> 'a -> 'a
