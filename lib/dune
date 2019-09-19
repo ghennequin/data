@@ -1,4 +1,4 @@
 (library
  (name data)
  (public_name data)
- (libraries unix bigarray hdf5-ocaml.caml cmdargs owl fpath yojson))
+ (libraries unix bigarray hdf5.caml cmdargs owl fpath yojson))
